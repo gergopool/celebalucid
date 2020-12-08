@@ -1,3 +1,6 @@
 torch-lucent
 dotmap
 numpy
+tqdm
+opencv-python
+pandas

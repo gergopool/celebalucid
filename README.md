@@ -83,4 +83,25 @@ bias = model.weights['mixed3a_3x3_bottleneck'].b
 
 ## Activations
 
-*Under development*
+In order to see activations, you first need to download the test data (~300MB)
+
+```python
+from celebalucid import build_generator
+
+# The test data will be downloaded to this folder
+DOWNLOAD_DIR = 'res/images'
+
+# This is a torch.utils.data.DataLoader object
+# If you already have the dataset downloaded
+# to this folder, it will skip the download
+generator = build_generator('res/images')
+```
+
+Now, utilize the data generator to load images from disk, feed the input with the neural network and then you're free to analyse the activations (aka. neurons.)
+
+```python
+for x, y in generator:
+    model.stream(x)
+    # Now access neurons the same way as on weights
+    some_operations(model.neurons.conv2d0)
+```

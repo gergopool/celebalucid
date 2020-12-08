@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from dotmap import DotMap
+from functools import partial
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -20,12 +21,13 @@ class ModelManipulator(InceptionV1):
         self._load_weights_from_url(pt_url)
         self.layer_info = load_layer_info()
         self.weights = self._load_weights()
-        self.activations = {}
+        self.neurons = {}
+        self._activations = {}
         self._register_activation_fw_hooks()
 
         # Assign device
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.to(device).eval()
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.to(self.device).eval()
 
     def lucid(self, layer_n_channel, size=224, thresholds=[512], progress=False):
         layer_n_channel = self._correct_layer_n_channel(layer_n_channel)
@@ -50,6 +52,12 @@ class ModelManipulator(InceptionV1):
         img = (img*255).astype(np.uint8)
         return img
 
+
+    def stream(self, x):
+        x = x.to(self.device)
+        self.forward(x)
+        self.neurons = DotMap(self._activations)
+
     # ========================================================================
     # Private functions
     # ========================================================================
@@ -60,11 +68,14 @@ class ModelManipulator(InceptionV1):
         return ':'.join([layer, channel])
 
     def _register_activation_fw_hooks(self):
-        for module in self.modules():
-            module.register_forward_hook(self._save_activation)
+        for name, module in self.named_modules():
+            if name.endswith('_pre_relu_conv') or name == 'logits':
+                name = name.replace('_pre_relu_conv', '')
+                args = partial(self._save_activation, name)
+                module.register_forward_hook(args)
 
-    def _save_activation(self, module, m_in, m_out):
-        self.activations[module] = m_out
+    def _save_activation(self, name, module, m_in, m_out):
+        self._activations[name] = m_out
 
     def _load_weights(self):
         extracted_weights = DotMap()

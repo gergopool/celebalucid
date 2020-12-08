@@ -8,7 +8,7 @@ with open('README.md') as f:
 
 setup(
     name='celebalucid',
-    version='0.1.1',
+    version='0.1.2',
     author='Gergely Papp',
     author_email='gergopool@gmail.com',
     packages=find_packages(),
