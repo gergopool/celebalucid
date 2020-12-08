@@ -1,6 +1,6 @@
 # CelebA & Lucid
 
-![cover_image](./img/example_neurons.jpg)
+![cover_image](https://i.imgur.com/RVzTfhv.png)
 
 This package is a quick access tool of a research project of Alfred Renyi Institute of Mathematics. In our project we use lucid visualizations to get a better understanding how transfer learning manipulates a neural network. As a baseline we took Clarity's InceptionV1 network trained on imagenet and we further trained the network on the CelebA dataset.
 
@@ -65,7 +65,7 @@ Visualize a neuron with lucid as
 img = model.lucid('mixed5a_5x5:7', progress=True)
 plt.imshow(img)
 ```
-![result_image](./img/mixed5a_5x5:7.jpg)
+![result_image](https://i.imgur.com/PBBuG1r.png)
 
 ## Weights
 
