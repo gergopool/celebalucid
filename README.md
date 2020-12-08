@@ -24,7 +24,9 @@ Python 3.6+
 
 ## Install
 
-```pip install celebalucid```
+```bash
+pip install celebalucid
+```
 
 # Usage
 
