@@ -16,16 +16,17 @@ def load_layer_info():
         data.append([layer_name, n_channels])
     return data
 
-def download_test_data(target_folder):
-
+def download_test_data(target_folder, verbose=True):
     root = os.path.join(target_folder, 'test_only_celeba')
     csv = os.path.join(root, 'test.csv')
 
     if os.path.isdir(root):
-        print('Dataset found.')
+        if verbose:
+            print('Dataset found.')
         return csv
     else:
-        print('Dataset not found. Downloading..')
+        if verbose:
+            print('Dataset not found. Downloading..')
 
     os.makedirs(target_folder, exist_ok=True)
     zip_path = _download_file(test_only_celeba_zip)

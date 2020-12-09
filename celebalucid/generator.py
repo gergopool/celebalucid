@@ -10,13 +10,21 @@ from torchvision import transforms
 from celebalucid.utils import download_test_data
 
 
-def build_generator(workdir, batch_size=32, shuffle=False, transform=None):
-    csv = download_test_data(workdir)
+def build_generator(workdir, batch_size=32, shuffle=False, transform=None, **kwargs):
+    verbose = kwargs.get('verbose', True)
+    csv = download_test_data(workdir, verbose)
     dataset = CelebAGenerator(csv, transform=transform)
+
+    num_workers = kwargs.get('num_workers', 1)
+    drop_last = kwargs.get('drop_last', True)
+    pin_memory = kwargs.get('pin_memory', False)
+
     data_loader = DataLoader(dataset,
                              batch_size=batch_size,
                              shuffle=shuffle,
-                             num_workers=1)
+                             num_workers=num_workers,
+                             pin_memory=pin_memory,
+                             drop_last=drop_last)
     return data_loader
 
 

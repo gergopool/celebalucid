@@ -48,12 +48,12 @@ model.layer_info
 ```
 Calling this you will see the list of available layers along with the available number of channels (neurons).
 ```bash
-[['conv2d0', 64],
- ['conv2d1', 64],
- ['conv2d2', 192],
- ['mixed3a_1x1', 64],
- ['mixed3a_3x3_bottleneck', 96],
- ...]
+Out: [['conv2d0', 64],
+      ['conv2d1', 64],
+      ['conv2d2', 192],
+      ['mixed3a_1x1', 64],
+      ['mixed3a_3x3_bottleneck', 96],
+      ...]
 ```
 
 ## Lucid
@@ -94,7 +94,7 @@ DOWNLOAD_DIR = 'res/images'
 # This is a torch.utils.data.DataLoader object
 # If you already have the dataset downloaded
 # to this folder, it will skip the download
-generator = build_generator('res/images')
+generator = build_generator(DOWNLOAD_DIR)
 ```
 
 Now, utilize the data generator to load images from disk, feed the input with the neural network and then you're free to analyse the activations (aka. neurons.)
@@ -104,4 +104,51 @@ for x, y in generator:
     model.stream(x)
     # Now access neurons the same way as on weights
     some_operations(model.neurons.conv2d0)
+```
+
+## CKA similarity
+
+The code provides a centered kernel alignment (CKA) comparison between models. In each epoch, the script runs the models on `n_iters * batch_size` images and then calculates the CKA value for a given layer. It does the same for each epoch and it returns with the mean cka over the epochs.
+
+Define your CKA analyser as
+
+```python
+from celebalucid import CKA
+
+# Default kwargs: n_epochs=10, n_iters=64, batch_size=32
+cka = CKA('res/images', ['imagenet', 'sgd'])
+```
+Then run your comparison on a specific layer
+```python
+# Optional: set verbose=False for no progress bar
+cka('mixed4a_3x3') 
+```
+```bash
+Out: 0.95517987
+```
+
+If you want to choose models, instead of creating a new CKA object set new models in order to be GPU RAM efficient:
+
+```python
+cka.set_models(['imagenet', 'adam']) 
+```
+
+# Credits
+
+```bash
+https://github.com/tensorflow/lucid
+https://github.com/greentfrapp/lucent
+```
+# References
+```
+@inproceedings{pmlr-v97-kornblith19a,
+  title = {Similarity of Neural Network Representations Revisited},
+  author = {Kornblith, Simon and Norouzi, Mohammad and Lee, Honglak and Hinton, Geoffrey},
+  booktitle = {Proceedings of the 36th International Conference on Machine Learning},
+  pages = {3519--3529},
+  year = {2019},
+  volume = {97},
+  month = {09--15 Jun},
+  publisher = {PMLR}
+}
 ```
