@@ -1,7 +1,7 @@
 import os
 from celebalucid.models.manipulator import ModelManipulator
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __author__ = 'Gergely Papp'
 __credits__ = 'Alfred Renyi Institute of Mathematics'
 

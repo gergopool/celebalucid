@@ -133,6 +133,38 @@ If you want to choose models, instead of creating a new CKA object set new model
 cka.set_models(['imagenet', 'adam']) 
 ```
 
+# Weight manipulation
+
+You have the possibility to override a network's weights with constant or another model's weights. 
+
+```python
+imagenet = load_model('imagenet')
+sgd = load_model('sgd')
+
+# Change an entire layer to imagenet
+sgd.set_weights('mixed4a_3x3', imagenet)
+
+# Change a single neuron
+sgd.set_weights('mixed4a_3x3:0', imagenet)
+
+# Change to a constant
+sgd.set_weights('mixed4a_3x3', 0)
+```
+It's good to know that by default both weights an biases change. If you know you need only one of these, you can save a bit of computation.
+```python
+# Default behaviour
+sgd.set_weights('mixed4a_3x3', 0, mode='both')
+
+# Change weights only
+sgd.set_weights('mixed4a_3x3', 0, mode='weight')
+
+# Change bias only
+sgd.set_weights('mixed4a_3x3', 0, mode='bias')
+```
+
+
+
+
 # Credits
 
 ```bash

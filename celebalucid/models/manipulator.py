@@ -52,20 +52,73 @@ class ModelManipulator(InceptionV1):
         img = (img*255).astype(np.uint8)
         return img
 
-
     def stream(self, x):
         x = x.to(self.device)
         self.forward(x)
         self.neurons = DotMap(self._activations)
 
+    def set_weights(self, layer, reference, mode='both'):
+        valid_modes = ['both', 'weight', 'bias']
+        if mode not in valid_modes:
+            raise ValueError('Invalid mode: {}. Please provide a mode from {}'\
+                             .format(mode, ', '.join(valid_modes)))
+        if mode == 'both':
+            self.set_weights(layer, reference, 'weight')
+            self.set_weights(layer, reference, 'bias')
+            return
+        layer = self._correct_layer_n_channel(layer)
+        layer, neuron_i = self._split_layer_name(layer)
+        targets = self._extract_target_weights(reference, layer, neuron_i, mode)
+        state_dict = self.state_dict()
+        new_state_dict = self._change_state_dict(state_dict, layer,
+                                                 neuron_i, targets, mode)
+        self.load_state_dict(new_state_dict)
+
+
     # ========================================================================
     # Private functions
     # ========================================================================
 
+    def _extract_target_weights(self, reference, layer, i, mode='weight'):
+        if type(reference) == type(self):
+            target = self._get_layer(reference, layer, i, mode)
+        else:
+            baseline = self._get_layer(self, layer, i, mode)
+            target = torch.ones_like(baseline, dtype=baseline.dtype) * reference
+        return target
+            
+
+    def _change_state_dict(self, state_dict, layer, i, value, mode='weight'):
+        if i is None:
+            state_dict[layer+'.'+mode] = value
+        else:
+            state_dict[layer+'.'+mode][i] = value
+        return state_dict
+
+    def _get_layer(self, model, layer, i, mode='weight'):
+        states = model.state_dict()
+        layer = states[layer+'.'+mode]
+        if i is not None:
+            layer = layer[i]
+        return layer
+
+    def _split_layer_name(self, layer):
+        if ':' not in layer:
+            return layer, None
+        else:
+            layer, neuron_i = layer.split(':')
+            neuron_i = int(neuron_i)
+            return layer, neuron_i
+
     def _correct_layer_n_channel(self, layer_n_channel):
-        layer, channel = layer_n_channel.split(':')
-        layer += '_pre_relu_conv' if layer != 'logits' else ''
-        return ':'.join([layer, channel])
+        if ':' in layer_n_channel:
+            layer, channel = layer_n_channel.split(':')
+            layer += '_pre_relu_conv' if layer != 'logits' else ''
+            return ':'.join([layer, channel])
+        else:
+            layer = layer_n_channel
+            layer += '_pre_relu_conv' if layer != 'logits' else ''
+            return layer
 
     def _register_activation_fw_hooks(self):
         for name, module in self.named_modules():
