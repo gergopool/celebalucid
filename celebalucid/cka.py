@@ -1,6 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 import torch
+import gc
 import warnings
 
 from celebalucid.generator import build_generator
@@ -9,8 +10,9 @@ from celebalucid import load_model
 
 class CKA:
 
-    def __init__(self, workdir, model_names, n_epochs=10, n_iters=64, batch_size=32):
+    def __init__(self, workdir, dataset_name, model_names, n_epochs=10, n_iters=64, batch_size=32):
         self.workdir = workdir
+        self.dataset_name = dataset_name
         self.set_models(model_names)
         self.n_epochs = n_epochs
         self.n_iters = n_iters
@@ -21,8 +23,10 @@ class CKA:
 
     def set_models(self, model_names):
         if hasattr(self, 'models'):
-            del self.models
-        self.models = [load_model(name) for name in model_names]
+            self.models[0].switch_to(model_names[0])
+            self.models[1].switch_to(model_names[1])
+        else:
+            self.models = [load_model(name) for name in model_names]
 
     def __call__(self, layer, verbose=True):
         # CKA results
@@ -63,9 +67,10 @@ class CKA:
     def _get_gen(self, seed=None):
         if seed is not None:
             torch.manual_seed(seed)
-        return build_generator(self.workdir, batch_size=self.batch_size,
-                               shuffle=True, num_workers=4,
-                               pin_memory=True, verbose=False, drop_last=True)
+        return build_generator(self.workdir, self.dataset_name,
+                               batch_size=self.batch_size, shuffle=True,
+                               num_workers=1, pin_memory=False,
+                               verbose=False, drop_last=True)
 
     def _revise_n_iters(self):
         n_max_batches = len(self._get_gen())

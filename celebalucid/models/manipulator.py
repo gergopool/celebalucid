@@ -10,14 +10,16 @@ from lucent.optvis import transform, param, render
 
 from celebalucid.models.inceptionv1 import InceptionV1
 from celebalucid.utils import load_layer_info
+from celebalucid import base_url
 
 
 class ModelManipulator(InceptionV1):
-    def __init__(self,
-                 pt_url):
+    def __init__(self, pt_url):
+        self.bn = '-bn' in pt_url
         super(ModelManipulator, self).__init__(n_features=40,
                                                pretrained=False,
-                                               redirected_ReLU=True)
+                                               redirected_ReLU=True,
+                                               bn=self.bn)
         self._load_weights_from_url(pt_url)
         self.layer_info = load_layer_info()
         self.weights = self._load_weights()
@@ -28,6 +30,11 @@ class ModelManipulator(InceptionV1):
         # Assign device
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.to(self.device).eval()
+
+    def switch_to(self, str_model):
+        url = os.path.join(base_url, str_model+'.pt')
+        self._load_weights_from_url(url)
+        self.weights = self._load_weights()
 
     def lucid(self, layer_n_channel, size=224, thresholds=[512], progress=False):
         layer_n_channel = self._correct_layer_n_channel(layer_n_channel)
@@ -133,6 +140,8 @@ class ModelManipulator(InceptionV1):
     def _load_weights(self):
         extracted_weights = DotMap()
         for name, weights in self.named_parameters():
+            if "_bn" in name:
+                continue
             layer_name, weight_format = name.split('.')
             weight_format = weight_format[0]
             layer_name = layer_name.replace('_pre_relu_conv', '')

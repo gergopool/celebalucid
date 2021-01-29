@@ -10,10 +10,10 @@ from torchvision import transforms
 from celebalucid.utils import download_test_data
 
 
-def build_generator(workdir, batch_size=32, shuffle=False, transform=None, **kwargs):
+def build_generator(workdir, dataset_name, batch_size=32, shuffle=False, transform=None, **kwargs):
     verbose = kwargs.get('verbose', True)
-    csv = download_test_data(workdir, verbose)
-    dataset = CelebAGenerator(csv, transform=transform)
+    csv = download_test_data(workdir, dataset_name, verbose)
+    dataset = Generator(csv, transform=transform)
 
     num_workers = kwargs.get('num_workers', 1)
     drop_last = kwargs.get('drop_last', True)
@@ -28,7 +28,7 @@ def build_generator(workdir, batch_size=32, shuffle=False, transform=None, **kwa
     return data_loader
 
 
-class CelebAGenerator(Dataset):
+class Generator(Dataset):
     def __init__(self,
                  csv,
                  transform=None):
@@ -39,9 +39,6 @@ class CelebAGenerator(Dataset):
 
         # Convert relative paths to absolute
         self.df.img = self.df.img.apply(lambda x: os.path.join(self.root, x))
-
-        # Target shape
-        self.target_shape = (224, 224, 3)
 
         # Transforms
         self.transform = transform

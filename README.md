@@ -4,9 +4,19 @@
 
 This package is a quick access tool of a research project of Alfred Renyi Institute of Mathematics. In our project we use lucid visualizations to get a better understanding how transfer learning manipulates a neural network. As a baseline we took Clarity's InceptionV1 network trained on imagenet and we further trained the network on the CelebA dataset.
 
+In our project we also revisit and rethink the comparison of activations and features.
+
 # Networks
 
-We've trained three neural networks. One learning 100 epochs with SGD optimizer, one learning 10 epochs with Adam and one learning 100 epochs with Adam. We'll reference these trainings later as **sgd, adam and adam_overfit**, while the baseline will be referenced as **imagenet**.
+We've trained numerous neural networks. At the first stage, we trained three: one learning 100 epochs with SGD optimizer, one learning 10 epochs with Adam and one learning 100 epochs with Adam. We reference these trainings later as **sgd, adam and adam_overfit**, while the baseline will be referenced as **imagenet**. Then, we took a permuation of some sampling parameters. We defined 3 different gradient noise (the order of batches the neural network is fed) and 3+1 networks. The 3 networks were initialized with 3 different, randomly sampled weights, while the +1 is the network which were pretrained on imagenet.
+
+| | GradNoise1 (gn1) | GradNoise2 (gn2) | GradNoise3 (gn3) |
+| --- | :---: | :---: | :---: |
+| **Imagenet (img)** | &#9745; | &#9745; | &#9745; |
+| **InitNoise1 (in1)** | &#9745; | &#9745; | &#9745; |
+| **InitNoise2 (in2)** | &#9745; | &#9745; | &#9745; |
+| **InitNoise3 (in3)** | &#9745; | &#9745; | &#9745; |
+
 
 Details of the trainings:
 
@@ -15,6 +25,18 @@ Details of the trainings:
 | sgd  | 100 | 0.16 | 92.7% | 0.18 | 91.9% |
 | adam  | 10 | 0.16 | 92.9% | 0.18 | 91.9% |
 | adam_overfit  | 100 | 0.01 | 99.3% | 0.93 | 90.8% |
+| img-gn1 | 20 | 0.11 | 94.90% | 0.21 | 91.63% |
+| img-gn2 | 20 | 0.11 | 94.89% | 0.21 | 91.60% |
+| img-gn3 | 20 | 0.11 | 94.88% | 0.21 | 91.49% |
+| in1-gn1 | 20 | 0.17 | 92.33% | 0.18 | 91.70% |
+| in1-gn2 | 20 | 0.17 | 92.32% | 0.19 | 91.56% |
+| in1-gn3 | 20 | 0.17 | 92.29% | 0.19 | 91.53% |
+| in2-gn1 | 20 | 0.17 | 92.36% | 0.18 | 91.73% |
+| in2-gn2 | 20 | 0.17 | 92.35% | 0.19 | 91.60% |
+| in2-gn3 | 20 | 0.17 | 92.33% | 0.19 | 91.56% |
+| in3-gn1 | 20 | 0.17 | 92.32% | 0.18 | 91.69% |
+| in3-gn2 | 20 | 0.17 | 92.32% | 0.19 | 91.59% |
+| in3-gn3 | 20 | 0.17 | 92.32% | 0.19 | 91.60% |
 
 # Setup
 
@@ -36,9 +58,22 @@ First, load either of the networks as
 ```python
 from celebalucid import load_model
 
-# Choose from ['imagenet', 'sgd', 'adam', 'adam_overfit']
+# Choose from 
+# 'imagenet', 'sgd', 'adam', 'adam_overfit'
+# 'img-gn1', 'img-gn2', 'img-gn3'
+# 'in1-gn1', 'in1-gn2', 'in1-gn3'
+# 'in2-gn1', 'in2-gn2', 'in2-gn3'
+# 'in3-gn1', 'in3-gn2', 'in3-gn3'
 model = load_model('imagenet') 
 ```
+
+## Change weights
+In order to avoid the redefinition of models and unnecessary memory usage, you can update the state dictionary of a model.
+```python
+model.switch_to('sgd') 
+```
+
+
 
 ## Layer information
 
@@ -91,10 +126,13 @@ from celebalucid import build_generator
 # The test data will be downloaded to this folder
 DOWNLOAD_DIR = 'res/images'
 
+# Choose dataset 'celeba' or 'imagenet'
+DATASET = 'imagenet'
+
 # This is a torch.utils.data.DataLoader object
 # If you already have the dataset downloaded
 # to this folder, it will skip the download
-generator = build_generator(DOWNLOAD_DIR)
+generator = build_generator(DOWNLOAD_DIR, DATASET)
 ```
 
 Now, utilize the data generator to load images from disk, feed the input with the neural network and then you're free to analyse the activations (aka. neurons.)
@@ -115,8 +153,9 @@ Define your CKA analyser as
 ```python
 from celebalucid import CKA
 
+# Args: working_dir, dataset, models_to_compare
 # Default kwargs: n_epochs=10, n_iters=64, batch_size=32
-cka = CKA('res/images', ['imagenet', 'sgd'])
+cka = CKA('res/images', 'celeba', ['imagenet', 'sgd'])
 ```
 Then run your comparison on a specific layer
 ```python
